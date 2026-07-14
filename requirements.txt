@@ -1,0 +1,10 @@
+ultralytics
+opencv-python
+streamlit
+supervision
+trackers
+scikit-learn
+pandas
+numpy
+stripe
+gdown

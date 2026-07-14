@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+data.txt
+
+# Unrelated leftover files from an earlier, separate dataset experiment
+/data.yaml
+README.dataset.txt
+README.roboflow.txt
+
+# Local runtime state
+app_data.db
+
+# Generated outputs (recreate by running the scripts)
+outputs/
+videos/
+runs/
+
+# Large downloaded assets (recreate via setup instructions in README)
+roboflow_dataset/
+sports/
+notebooks/
+yolov8n.pt
+
+# Editor/OS
+.vscode/
+.idea/
+Thumbs.db
