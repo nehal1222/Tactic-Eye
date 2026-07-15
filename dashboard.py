@@ -25,31 +25,30 @@ TEAM_B_COLOR = "#2a78d6"   # categorical blue
 CHART_INK = "#52514e"
 CHART_GRIDLINE = "#e1e0d9"
 
-PINK = "#ff4fc3"
-PINK_DEEP = "#c026d3"
+TEAL = "#008080"
+NAVY = "#003366"
+CREAM = "#FDFBF7"
+SOFT_GRAY = "#E6E6E6"
 
 PAGE_CSS = """
 <style>
 .viz-root, .stApp {
-  color-scheme: dark;
-  --surface-1: #0a0a0a;
-  --page-plane: #000000;
-  --text-primary: #ff4fc3;
-  --text-secondary: #e879c9;
-  --border: rgba(255,79,195,0.25);
+  color-scheme: light;
+  --surface-1: #ffffff;
+  --page-plane: #FDFBF7;
+  --text-primary: #003366;
+  --text-secondary: #4a5568;
+  --border: #E6E6E6;
+  --accent: #008080;
 }
-.stApp { background: #000000; }
-.stApp, .stApp p, .stApp span, .stApp label, .stApp li { color: #ff4fc3; }
-.stApp h1, .stApp h2, .stApp h3 { color: #ff8fd6; }
-section[data-testid="stSidebar"] { background: #0a0a0a; border-right: 1px solid rgba(255,79,195,0.15); }
+.stApp { background: #FDFBF7; }
+.stApp, .stApp p, .stApp span, .stApp label, .stApp li { color: #333333; }
+.stApp h1, .stApp h2, .stApp h3 { color: #003366; }
+section[data-testid="stSidebar"] { background: #ffffff; border-right: 1px solid #E6E6E6; }
 @keyframes heroShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
-}
-@keyframes glowPulse {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 0.85; }
 }
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(8px); }
@@ -61,26 +60,15 @@ section[data-testid="stSidebar"] { background: #0a0a0a; border-right: 1px solid 
   padding: 28px 32px;
   border-radius: 14px;
   margin-bottom: 8px;
-  background: linear-gradient(120deg, #000000, #3b0740, #000000, #5b0a63);
+  background: linear-gradient(120deg, #008080, #003366, #008080);
   background-size: 300% 300%;
-  border: 1px solid rgba(255,79,195,0.3);
-  animation: heroShift 12s ease-in-out infinite, fadeInUp 0.5s ease-out;
-  color: #ff8fd6;
-  box-shadow: 0 0 40px rgba(255,79,195,0.15);
-}
-.hero-banner::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0.5;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
-  mix-blend-mode: overlay;
-  pointer-events: none;
+  animation: heroShift 14s ease-in-out infinite, fadeInUp 0.5s ease-out;
+  color: #ffffff;
 }
 .hero-banner h1, .hero-banner p, .hero-banner .logo-row { position: relative; }
 .logo-row { display: flex; align-items: center; gap: 10px; }
-.hero-banner h1 { margin: 0; font-size: 1.9rem; font-weight: 700; color: #ff8fd6; text-shadow: 0 0 18px rgba(255,79,195,0.6); }
-.hero-banner p { margin: 6px 0 0 0; opacity: 0.9; font-size: 0.95rem; }
+.hero-banner h1 { margin: 0; font-size: 1.9rem; font-weight: 700; color: #ffffff; }
+.hero-banner p { margin: 6px 0 0 0; opacity: 0.92; font-size: 0.95rem; }
 .legend-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border-radius: 999px; margin-right: 8px;
@@ -96,46 +84,46 @@ div[data-testid="stExpander"] {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 div[data-testid="stExpander"]:hover {
-  box-shadow: 0 6px 20px rgba(255,79,195,0.15);
+  box-shadow: 0 6px 20px rgba(0,51,102,0.08);
 }
 .stButton button, .stDownloadButton button {
-  background: linear-gradient(135deg, #ff4fc3, #c026d3);
-  color: #000 !important;
+  background: #008080;
+  color: #ffffff !important;
   border: none;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .stButton button:hover, .stDownloadButton button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(255,79,195,0.5);
+  box-shadow: 0 4px 16px rgba(0,128,128,0.35);
 }
 div[data-testid="stMetric"] {
   animation: fadeInUp 0.4s ease-out;
 }
-div[data-testid="stMetricValue"] { color: #ff4fc3; }
+div[data-testid="stMetricValue"] { color: #008080; }
 .stTabs [data-baseweb="tab-list"] {
   gap: 4px;
   position: relative;
   padding-left: 40px;
+  border-bottom: 1px solid #E6E6E6;
 }
 .stTabs [data-baseweb="tab-list"]::before {
   content: "";
   position: absolute;
   left: 0; top: 50%;
   transform: translateY(-50%);
-  width: 28px; height: 28px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Ccircle cx='18' cy='18' r='16' fill='none' stroke='%23ff4fc3' stroke-width='2'/%3E%3Ccircle cx='18' cy='18' r='9' fill='%23ff4fc3'/%3E%3Ccircle cx='18' cy='18' r='4' fill='%23000000'/%3E%3C/svg%3E");
+  width: 26px; height: 26px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Ccircle cx='18' cy='18' r='16' fill='none' stroke='%23008080' stroke-width='2'/%3E%3Ccircle cx='18' cy='18' r='9' fill='%23008080'/%3E%3Ccircle cx='18' cy='18' r='4' fill='%23FDFBF7'/%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
-  filter: drop-shadow(0 0 6px rgba(255,79,195,0.7));
 }
 .stTabs [data-baseweb="tab"] {
   border-radius: 8px 8px 0 0;
   padding: 8px 16px;
-  color: #e879c9;
+  color: #4a5568;
 }
 .stTabs [aria-selected="true"] {
-  color: #ff4fc3 !important;
-  border-bottom-color: #ff4fc3 !important;
+  color: #008080 !important;
+  border-bottom-color: #008080 !important;
 }
 .apple-section {
   padding: 56px 24px;
@@ -146,14 +134,13 @@ div[data-testid="stMetricValue"] { color: #ff4fc3; }
 .apple-section:last-child { border-bottom: none; }
 .apple-section .eyebrow {
   font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; color: #ff4fc3; margin-bottom: 10px;
+  text-transform: uppercase; color: #008080; margin-bottom: 10px;
 }
 .apple-section h2 {
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   font-weight: 700;
   margin: 0 0 14px 0;
-  color: #ff8fd6;
-  text-shadow: 0 0 16px rgba(255,79,195,0.4);
+  color: #003366;
 }
 .apple-section p {
   font-size: 1.05rem;
@@ -167,8 +154,7 @@ div[data-testid="stMetricValue"] { color: #ff4fc3; }
   margin: 40px 0 8px 0;
 }
 .stat-row .stat-value {
-  font-size: 2.4rem; font-weight: 700; color: #ff4fc3;
-  text-shadow: 0 0 14px rgba(255,79,195,0.5);
+  font-size: 2.4rem; font-weight: 700; color: #008080;
 }
 .stat-row .stat-label {
   font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;
@@ -183,35 +169,29 @@ div[data-testid="stMetricValue"] { color: #ff4fc3; }
   align-items: center;
   justify-content: center;
   text-align: center;
-  border: 1px solid rgba(255,79,195,0.3);
   animation: fadeInUp 0.5s ease-out;
 }
 .photo-hero::before {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(circle at 22% 28%, rgba(255,45,149,0.65), transparent 45%),
-    radial-gradient(circle at 78% 22%, rgba(192,38,211,0.6), transparent 50%),
-    radial-gradient(circle at 50% 85%, rgba(255,79,195,0.5), transparent 55%),
-    #000000;
+  background: linear-gradient(135deg, #008080, #003366);
   background-size: 200% 200%;
-  animation: heroShift 16s ease-in-out infinite, glowPulse 6s ease-in-out infinite;
+  animation: heroShift 16s ease-in-out infinite;
 }
-.photo-hero .photo-hero-content { position: relative; color: #ff8fd6; padding: 0 24px; }
-.photo-hero .photo-hero-content .eyebrow { color: #ff9fdb; }
+.photo-hero .photo-hero-content { position: relative; color: #ffffff; padding: 0 24px; }
+.photo-hero .photo-hero-content .eyebrow { color: #cdeeee; }
 .photo-hero h1 {
   font-size: clamp(2.2rem, 5vw, 3.4rem);
   font-weight: 700;
   margin: 8px 0 0 0;
-  text-shadow: 0 0 30px rgba(255,79,195,0.8);
 }
 .photo-hero p {
   font-size: 1.1rem;
   margin: 12px 0 0 0;
   opacity: 0.95;
   max-width: 560px;
-  color: #f5c6e8;
+  color: #e6f5f5;
 }
 .logo-3d-wrap {
   display: flex;
@@ -225,12 +205,12 @@ div[data-testid="stMetricValue"] { color: #ff4fc3; }
   height: 130px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.65), transparent 42%),
-    conic-gradient(from 0deg, #ff9fe0, #ff4fc3, #c026d3, #5b0a63, #c026d3, #ff4fc3, #ff9fe0);
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.75), transparent 42%),
+    conic-gradient(from 0deg, #66b2b2, #008080, #003366, #001a33, #003366, #008080, #66b2b2);
   box-shadow:
-    0 0 70px rgba(255,79,195,0.65),
-    inset -12px -12px 30px rgba(0,0,0,0.45),
-    inset 12px 12px 30px rgba(255,255,255,0.25);
+    0 0 50px rgba(0,128,128,0.35),
+    inset -12px -12px 30px rgba(0,0,0,0.35),
+    inset 12px 12px 30px rgba(255,255,255,0.35);
   animation: spin3d 6s linear infinite;
 }
 @keyframes spin3d {
@@ -315,9 +295,9 @@ st.markdown(
       <div class="hero-banner">
         <div class="logo-row">
           <svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true">
-            <circle cx="18" cy="18" r="16" fill="none" stroke="#ff4fc3" stroke-width="2" opacity="0.9"/>
-            <circle cx="18" cy="18" r="9" fill="#ff4fc3"/>
-            <circle cx="18" cy="18" r="4" fill="#000000"/>
+            <circle cx="18" cy="18" r="16" fill="none" stroke="white" stroke-width="2" opacity="0.9"/>
+            <circle cx="18" cy="18" r="9" fill="white"/>
+            <circle cx="18" cy="18" r="4" fill="#008080"/>
           </svg>
           <h1>TacticEye</h1>
         </div>
