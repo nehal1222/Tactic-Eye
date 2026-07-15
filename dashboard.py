@@ -52,21 +52,65 @@ PAGE_CSS = """
   --text-secondary: #c3c2b7;
   --border: rgba(255,255,255,0.10);
 }
+@keyframes heroShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .hero-banner {
+  position: relative;
+  overflow: hidden;
   padding: 28px 32px;
   border-radius: 14px;
   margin-bottom: 8px;
-  background: linear-gradient(135deg, #2a78d6 0%, #1c5cab 100%);
+  background: linear-gradient(120deg, #2a78d6, #184f95, #2a78d6, #3987e5);
+  background-size: 300% 300%;
+  animation: heroShift 12s ease-in-out infinite, fadeInUp 0.5s ease-out;
   color: white;
 }
+.hero-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+.hero-banner h1, .hero-banner p { position: relative; }
 .hero-banner h1 { margin: 0; font-size: 1.9rem; font-weight: 700; }
 .hero-banner p { margin: 6px 0 0 0; opacity: 0.9; font-size: 0.95rem; }
 .legend-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border-radius: 999px; margin-right: 8px;
   font-size: 0.85rem; border: 1px solid var(--border);
+  animation: fadeInUp 0.4s ease-out;
 }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+/* Streamlit widget polish */
+div[data-testid="stExpander"] {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+div[data-testid="stExpander"]:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+.stButton button, .stDownloadButton button {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.stButton button:hover, .stDownloadButton button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(42,120,214,0.25);
+}
+div[data-testid="stMetric"] {
+  animation: fadeInUp 0.4s ease-out;
+}
 </style>
 """
 
@@ -305,6 +349,8 @@ with st.sidebar:
         help="Lower = faster preview. Sample clips are ~30fps.",
     )
 
+    run_clicked = st.button("▶ Run analysis", type="primary", disabled=video_path is None, use_container_width=True)
+
     if PAYMENTS_ENABLED and not premium:
         st.markdown("---")
         st.subheader("Upgrade to Premium")
@@ -347,8 +393,6 @@ with st.sidebar:
                     st.success("You're on the list!")
                 else:
                     st.info("That email is already on the waitlist.")
-
-    run_clicked = st.button("Run analysis", type="primary", disabled=video_path is None)
 
 st.markdown(
     f"""
