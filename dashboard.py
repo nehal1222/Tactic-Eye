@@ -1,7 +1,9 @@
+import base64
 import os
 import tempfile
 
 import cv2
+import gdown
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -151,6 +153,41 @@ div[data-testid="stMetric"] {
 .stat-row .stat-label {
   font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;
 }
+.photo-hero {
+  position: relative;
+  height: 380px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  animation: fadeInUp 0.5s ease-out;
+}
+.photo-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--hero-img);
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.55);
+}
+.photo-hero .photo-hero-content { position: relative; color: white; padding: 0 24px; }
+.photo-hero .photo-hero-content .eyebrow { color: #cde2fb; }
+.photo-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 700;
+  margin: 8px 0 0 0;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+}
+.photo-hero p {
+  font-size: 1.1rem;
+  margin: 12px 0 0 0;
+  opacity: 0.95;
+  max-width: 560px;
+}
 </style>
 """
 
@@ -177,6 +214,7 @@ MODEL_METRICS = pd.DataFrame([
     {"Class": "Ball", "Precision": 1.000, "Recall": 0.260, "mAP50": 0.303},
 ])
 
+HERO_IMAGE_PATH = "docs/hero_bg.jpg"
 PLAYER_MODEL_PATH = "models/best.pt"
 PITCH_MODEL_PATH = "sports/examples/soccer/data/football-pitch-detection.pt"
 SAMPLE_VIDEOS = {
@@ -185,6 +223,17 @@ SAMPLE_VIDEOS = {
     "08fd33_0.mp4": "sports/examples/soccer/data/08fd33_0.mp4",
     "573e61_0.mp4": "sports/examples/soccer/data/573e61_0.mp4",
     "121364_0.mp4": "sports/examples/soccer/data/121364_0.mp4",
+}
+# Google Drive file IDs for assets too large to commit to git — downloaded on
+# demand so a fresh clone/deploy (e.g. Streamlit Community Cloud) works without
+# manual setup steps.
+GDOWN_ASSET_IDS = {
+    PITCH_MODEL_PATH: "1Ma5Kt86tgpdjCTKfum79YMgNnSjcoOyf",
+    "sports/examples/soccer/data/0bfacc_0.mp4": "12TqauVZ9tLAv8kWxTTBFWtgt2hNQ4_ZF",
+    "sports/examples/soccer/data/2e57b9_0.mp4": "19PGw55V8aA6GZu5-Aac5_9mCy3fNxmEf",
+    "sports/examples/soccer/data/08fd33_0.mp4": "1OG8K6wqUw9t7lp9ms1M48DxRhwTYciK-",
+    "sports/examples/soccer/data/573e61_0.mp4": "1yYPKuXbHsCxqjA9G-S6aeR2Kcnos8RPU",
+    "sports/examples/soccer/data/121364_0.mp4": "1vVwjW1dE1drIdd4ZSILfbCGPD4weoNiu",
 }
 WARMUP_FRAMES = 30
 MIN_KEYPOINTS_FOR_HOMOGRAPHY = 6
@@ -232,8 +281,28 @@ st.markdown(
 )
 
 
+@st.cache_data
+def load_image_b64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("ascii")
+
+
+def ensure_asset(path):
+    """Downloads a large asset from Google Drive on first use if it's not already
+    on disk — lets a fresh clone/deploy work without manual gdown commands."""
+    if os.path.exists(path):
+        return
+    file_id = GDOWN_ASSET_IDS.get(path)
+    if file_id is None:
+        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with st.spinner(f"Downloading {os.path.basename(path)} (one-time setup)..."):
+        gdown.download(id=file_id, output=path, quiet=False)
+
+
 @st.cache_resource
 def load_models():
+    ensure_asset(PITCH_MODEL_PATH)
     return YOLO(PLAYER_MODEL_PATH), YOLO(PITCH_MODEL_PATH)
 
 
@@ -398,6 +467,7 @@ with st.sidebar:
     if source_choice == "Sample clip":
         video_label = st.selectbox("Choose a clip", list(SAMPLE_VIDEOS.keys()))
         video_path = SAMPLE_VIDEOS[video_label]
+        ensure_asset(video_path)
     else:
         uploaded = st.file_uploader("Upload a video", type=["mp4", "mov", "avi"])
         video_path = None
@@ -457,12 +527,19 @@ tab_home, tab_features, tab_analyze, tab_history, tab_analytics, tab_waitlist, t
 )
 
 with tab_home:
+    hero_b64 = load_image_b64(HERO_IMAGE_PATH) if os.path.exists(HERO_IMAGE_PATH) else None
     st.markdown(
-        """
+        f"""
         <div class="viz-root">
+          {f'''<div class="photo-hero" style="--hero-img: url('data:image/jpeg;base64,{hero_b64}');">
+            <div class="photo-hero-content">
+              <div class="eyebrow">Computer Vision · Sports Analytics</div>
+              <h1>TacticEye</h1>
+              <p>See the game the way a coach does — player detection, team
+              identification, and a live tactical radar, from a custom-trained model.</p>
+            </div>
+          </div>''' if hero_b64 else ''}
           <div class="apple-section">
-            <div class="eyebrow">Computer Vision · Sports Analytics</div>
-            <h2>See the game the way a coach does.</h2>
             <p>Upload match footage and get player detection, team identification, and a
             live tactical radar view — powered by a custom-trained detector, not a
             generic off-the-shelf model.</p>

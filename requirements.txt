@@ -9,3 +9,4 @@ numpy
 plotly
 stripe
 gdown
+git+https://github.com/roboflow/sports.git
