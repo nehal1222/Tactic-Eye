@@ -54,21 +54,6 @@ section[data-testid="stSidebar"] { background: #ffffff; border-right: 1px solid 
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.hero-banner {
-  position: relative;
-  overflow: hidden;
-  padding: 28px 32px;
-  border-radius: 14px;
-  margin-bottom: 8px;
-  background: linear-gradient(120deg, #008080, #003366, #008080);
-  background-size: 300% 300%;
-  animation: heroShift 14s ease-in-out infinite, fadeInUp 0.5s ease-out;
-  color: #ffffff;
-}
-.hero-banner h1, .hero-banner p, .hero-banner .logo-row { position: relative; }
-.logo-row { display: flex; align-items: center; gap: 10px; }
-.hero-banner h1 { margin: 0; font-size: 1.9rem; font-weight: 700; color: #ffffff; }
-.hero-banner p { margin: 6px 0 0 0; opacity: 0.92; font-size: 0.95rem; }
 .legend-chip {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border-radius: 999px; margin-right: 8px;
@@ -289,24 +274,6 @@ db.init_db()
 
 st.set_page_config(page_title="TacticEye", layout="wide")
 st.markdown(PAGE_CSS, unsafe_allow_html=True)
-st.markdown(
-    """
-    <div class="viz-root">
-      <div class="hero-banner">
-        <div class="logo-row">
-          <svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true">
-            <circle cx="18" cy="18" r="16" fill="none" stroke="white" stroke-width="2" opacity="0.9"/>
-            <circle cx="18" cy="18" r="9" fill="white"/>
-            <circle cx="18" cy="18" r="4" fill="#008080"/>
-          </svg>
-          <h1>TacticEye</h1>
-        </div>
-        <p>Custom-trained YOLOv8 detection · ByteTrack · team classification · homography-based tactical radar</p>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
 
 
 def ensure_asset(path):
