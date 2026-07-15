@@ -5,6 +5,7 @@ import tempfile
 import cv2
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import stripe
 import streamlit as st
 import streamlit.components.v1 as components
@@ -17,6 +18,61 @@ import db
 from sports.annotators.soccer import draw_pitch, draw_points_on_pitch
 from sports.common.view import ViewTransformer
 from sports.configs.soccer import SoccerPitchConfiguration
+
+# Validated categorical/status palette (checked with dataviz skill's validate_palette.js:
+# all CVD/contrast checks pass for both light and dark surfaces)
+TEAM_A_COLOR = "#e34948"   # categorical red
+TEAM_B_COLOR = "#2a78d6"   # categorical blue
+STATUS_GOOD = "#0ca30c"
+STATUS_CRITICAL = "#d03b3b"
+CHART_INK = "#52514e"
+CHART_GRIDLINE = "#e1e0d9"
+
+PAGE_CSS = """
+<style>
+.viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb;
+  --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page-plane: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --surface-1: #1a1a19;
+  --page-plane: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --border: rgba(255,255,255,0.10);
+}
+.hero-banner {
+  padding: 28px 32px;
+  border-radius: 14px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #2a78d6 0%, #1c5cab 100%);
+  color: white;
+}
+.hero-banner h1 { margin: 0; font-size: 1.9rem; font-weight: 700; }
+.hero-banner p { margin: 6px 0 0 0; opacity: 0.9; font-size: 0.95rem; }
+.legend-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px; margin-right: 8px;
+  font-size: 0.85rem; border: 1px solid var(--border);
+}
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+</style>
+"""
 
 DINO_GAME_HTML = """
 <div style="text-align:center;">
@@ -160,13 +216,39 @@ if STRIPE_SECRET_KEY:
 
 db.init_db()
 
-st.set_page_config(page_title="AI Tactical Dashboard", layout="wide")
-st.title("⚽ AI Tactical Dashboard")
+st.set_page_config(page_title="AI Tactical Dashboard", layout="wide", page_icon="⚽")
+st.markdown(PAGE_CSS, unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="viz-root">
+      <div class="hero-banner">
+        <h1>⚽ AI Tactical Dashboard</h1>
+        <p>Custom-trained YOLOv8 detection · ByteTrack · team classification · homography-based tactical radar</p>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 @st.cache_resource
 def load_models():
     return YOLO(PLAYER_MODEL_PATH), YOLO(PITCH_MODEL_PATH)
+
+
+def _style_fig(fig, height=280):
+    fig.update_layout(
+        template="plotly_white",
+        height=height,
+        margin=dict(l=10, r=10, t=20, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color=CHART_INK, size=13),
+        showlegend=False,
+    )
+    fig.update_xaxes(showgrid=False, linecolor=CHART_GRIDLINE)
+    fig.update_yaxes(showgrid=True, gridcolor=CHART_GRIDLINE, zeroline=False)
+    return fig
 
 
 def circular_frame_html(frame_bgr, size=340):
@@ -179,7 +261,7 @@ def circular_frame_html(frame_bgr, size=340):
     <div style="display:flex; justify-content:center; margin:12px 0;">
       <div style="position:relative; width:{size}px; height:{size}px;">
         <div style="position:absolute; inset:0; border-radius:50%;
-             background:conic-gradient(from 0deg, #ff4b4b, #4c8bf5, #2e7d32, #ff4b4b);
+             background:conic-gradient(from 0deg, #cde2fb, #2a78d6, #184f95, #2a78d6, #cde2fb);
              animation: spin 3s linear infinite;"></div>
         <div style="position:absolute; inset:6px; border-radius:50%; overflow:hidden; background:#000;">
           <img src="data:image/jpeg;base64,{b64}" style="width:100%; height:100%; object-fit:cover;">
@@ -427,7 +509,15 @@ with st.sidebar:
     run_clicked = st.button("Run analysis", type="primary", disabled=video_path is None)
 
 st.markdown(
-    "**Legend:** :red[■] Team A &nbsp; :blue[■] Team B &nbsp; 🟨 Referee/Goalkeeper &nbsp; ⬛ Ball"
+    f"""
+    <div class="viz-root">
+      <span class="legend-chip"><span class="legend-dot" style="background:{TEAM_A_COLOR};"></span>Team A</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:{TEAM_B_COLOR};"></span>Team B</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:#ffd700;"></span>Referee / Goalkeeper</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:#000000;"></span>Ball</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 prediction = st.radio(
@@ -517,20 +607,41 @@ with st.expander("📊 Analytics Dashboard"):
         if hist_df is not None:
             hist_df["date"] = pd.to_datetime(hist_df["timestamp"]).dt.date
             st.subheader("Analyses per day")
-            st.bar_chart(hist_df.groupby("date").size())
+            daily = hist_df.groupby("date").size().reset_index(name="count")
+            fig = go.Figure(go.Bar(
+                x=daily["date"].astype(str), y=daily["count"],
+                marker_color=TEAM_B_COLOR, text=daily["count"], textposition="outside",
+            ))
+            st.plotly_chart(_style_fig(fig), use_container_width=True)
 
         if pred_df is not None:
             st.subheader("Prediction accuracy")
-            acc_counts = pred_df["correct"].value_counts().rename(index={0: "Incorrect", 1: "Correct"})
-            st.bar_chart(acc_counts)
+            counts = pred_df["correct"].value_counts()
+            values = [int(counts.get(1, 0)), int(counts.get(0, 0))]
+            fig = go.Figure(go.Bar(
+                x=["Correct", "Incorrect"], y=values,
+                marker_color=[STATUS_GOOD, STATUS_CRITICAL], text=values, textposition="outside",
+            ))
+            st.plotly_chart(_style_fig(fig), use_container_width=True)
 
             st.subheader("Which team dominates more often")
-            st.bar_chart(pred_df["actual_team"].value_counts())
+            team_counts = pred_df["actual_team"].value_counts()
+            team_values = [int(team_counts.get("Team A", 0)), int(team_counts.get("Team B", 0))]
+            fig2 = go.Figure(go.Bar(
+                x=["Team A", "Team B"], y=team_values,
+                marker_color=[TEAM_A_COLOR, TEAM_B_COLOR], text=team_values, textposition="outside",
+            ))
+            st.plotly_chart(_style_fig(fig2), use_container_width=True)
 
         if wl_df is not None:
             wl_df["date"] = pd.to_datetime(wl_df["timestamp"]).dt.date
             st.subheader("Waitlist signups over time (cumulative)")
-            st.line_chart(wl_df.groupby("date").size().cumsum())
+            cum = wl_df.groupby("date").size().cumsum().reset_index(name="total")
+            fig3 = go.Figure(go.Scatter(
+                x=cum["date"].astype(str), y=cum["total"], mode="lines+markers",
+                line=dict(color=TEAM_B_COLOR, width=2), marker=dict(size=8),
+            ))
+            st.plotly_chart(_style_fig(fig3), use_container_width=True)
 
         st.markdown("---")
         st.subheader("Export for Power BI / Excel")

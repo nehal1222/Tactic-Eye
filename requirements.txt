@@ -6,5 +6,6 @@ trackers
 scikit-learn
 pandas
 numpy
+plotly
 stripe
 gdown
