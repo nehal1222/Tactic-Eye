@@ -1,3 +1,6 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
 ultralytics
 opencv-python
 streamlit
@@ -9,4 +12,3 @@ numpy
 plotly
 stripe
 gdown
-git+https://github.com/roboflow/sports.git

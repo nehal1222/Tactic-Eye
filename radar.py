@@ -5,9 +5,9 @@ import supervision as sv
 import numpy as np
 from sklearn.cluster import KMeans
 
-from sports.configs.soccer import SoccerPitchConfiguration
-from sports.common.view import ViewTransformer
-from sports.annotators.soccer import draw_pitch, draw_points_on_pitch
+from pitch_config import SoccerPitchConfiguration
+from view_transform import ViewTransformer
+from pitch_draw import draw_pitch, draw_points_on_pitch
 
 VIDEO_PATH = "sports/examples/soccer/data/0bfacc_0.mp4"
 WARMUP_FRAMES = 30

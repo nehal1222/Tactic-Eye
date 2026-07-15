@@ -40,10 +40,15 @@ this repo's dataset), the team-classification logic, and the whole Streamlit app
 (live streaming UI, history, analytics, waitlist).
 
 **Integrated, not reinvented:** the pitch-keypoint detection model and the
-homography/pitch-drawing utilities come from Roboflow's open-source
-[`sports`](https://github.com/roboflow/sports) repo — building a from-scratch pitch
-keypoint model was out of scope (would need its own multi-hour training run on a
-separate dataset), so the pretrained one is used directly for that piece.
+homography/pitch-drawing utilities (`pitch_config.py`, `view_transform.py`,
+`pitch_draw.py`) are adapted from Roboflow's open-source
+[`sports`](https://github.com/roboflow/sports) repo (MIT license) — building a
+from-scratch pitch keypoint model was out of scope (would need its own
+multi-hour training run on a separate dataset), so the pretrained one is used
+directly for that piece. These three files are vendored directly rather than
+installed as the full `sports` package, since that package's own dependencies
+(`transformers`, `umap-learn`) are needed only by a team-classifier feature this
+project doesn't use, not by the pieces actually imported here.
 
 ## Model performance (held-out test set)
 
@@ -67,7 +72,6 @@ independently per frame (no temporal smoothing yet — see Limitations below).
 
 ```bash
 pip install -r requirements.txt
-pip install git+https://github.com/roboflow/sports.git
 ```
 
 Download sample match footage and the pretrained pitch-keypoint model:

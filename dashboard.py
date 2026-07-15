@@ -15,9 +15,9 @@ from trackers import ByteTrackTracker
 from ultralytics import YOLO
 
 import db
-from sports.annotators.soccer import draw_pitch, draw_points_on_pitch
-from sports.common.view import ViewTransformer
-from sports.configs.soccer import SoccerPitchConfiguration
+from pitch_draw import draw_pitch, draw_points_on_pitch
+from view_transform import ViewTransformer
+from pitch_config import SoccerPitchConfiguration
 
 # Validated categorical/status palette (checked with dataviz skill's validate_palette.js:
 # all CVD/contrast checks pass for both light and dark surfaces)
