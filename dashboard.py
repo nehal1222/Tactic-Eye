@@ -1,4 +1,3 @@
-import base64
 import os
 import tempfile
 
@@ -8,7 +7,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import stripe
 import streamlit as st
-import streamlit.components.v1 as components
 import supervision as sv
 from sklearn.cluster import KMeans
 from trackers import ByteTrackTracker
@@ -23,8 +21,6 @@ from sports.configs.soccer import SoccerPitchConfiguration
 # all CVD/contrast checks pass for both light and dark surfaces)
 TEAM_A_COLOR = "#e34948"   # categorical red
 TEAM_B_COLOR = "#2a78d6"   # categorical blue
-STATUS_GOOD = "#0ca30c"
-STATUS_CRITICAL = "#d03b3b"
 CHART_INK = "#52514e"
 CHART_GRIDLINE = "#e1e0d9"
 
@@ -72,115 +68,6 @@ PAGE_CSS = """
 }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 </style>
-"""
-
-DINO_GAME_HTML = """
-<div style="text-align:center;">
-  <canvas id="dinoGame" width="600" height="180"
-    style="background:#f7f7f7; border:2px solid #535353; border-radius:8px; max-width:100%;"></canvas>
-  <div style="font-family:monospace; color:#535353; margin-top:4px; font-size:13px;">
-    Press SPACE or tap the canvas to jump — pass the time while your analysis runs!
-  </div>
-</div>
-<script>
-(function() {
-  const canvas = document.getElementById('dinoGame');
-  const ctx = canvas.getContext('2d');
-  const groundY = 140;
-  let dino = { x: 40, y: groundY - 30, w: 30, h: 30, vy: 0, jumping: false };
-  const gravity = 1.2;
-  const jumpVelocity = -16;
-  let obstacles = [];
-  let speed = 6;
-  let score = 0;
-  let gameOver = false;
-  let started = false;
-  let frame = 0;
-
-  function reset() {
-    dino.y = groundY - dino.h;
-    dino.vy = 0;
-    dino.jumping = false;
-    obstacles = [];
-    speed = 6;
-    score = 0;
-    gameOver = false;
-    frame = 0;
-  }
-  reset();
-
-  function jump() {
-    if (gameOver) { reset(); started = true; return; }
-    started = true;
-    if (!dino.jumping) {
-      dino.vy = jumpVelocity;
-      dino.jumping = true;
-    }
-  }
-
-  document.addEventListener('keydown', function(e) {
-    if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
-  });
-  canvas.addEventListener('mousedown', jump);
-  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); jump(); });
-
-  function update() {
-    if (!started || gameOver) return;
-    frame++;
-    dino.vy += gravity;
-    dino.y += dino.vy;
-    if (dino.y > groundY - dino.h) {
-      dino.y = groundY - dino.h;
-      dino.vy = 0;
-      dino.jumping = false;
-    }
-
-    if (frame % Math.max(40, 90 - Math.floor(speed * 2)) === 0) {
-      obstacles.push({ x: canvas.width, y: groundY - 25, w: 15 + Math.random() * 10, h: 25 });
-    }
-    obstacles.forEach(function(o) { o.x -= speed; });
-    obstacles = obstacles.filter(function(o) { return o.x + o.w > 0; });
-
-    obstacles.forEach(function(o) {
-      if (dino.x < o.x + o.w && dino.x + dino.w > o.x && dino.y < o.y + o.h && dino.y + dino.h > o.y) {
-        gameOver = true;
-      }
-    });
-
-    score += 1;
-    if (frame % 300 === 0) speed += 0.5;
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#535353';
-    ctx.fillRect(0, groundY, canvas.width, 2);
-
-    ctx.fillStyle = '#4c8bf5';
-    ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
-
-    ctx.fillStyle = '#2e7d32';
-    obstacles.forEach(function(o) { ctx.fillRect(o.x, o.y, o.w, o.h); });
-
-    ctx.fillStyle = '#535353';
-    ctx.font = '14px monospace';
-    ctx.fillText('Score: ' + Math.floor(score / 10), canvas.width - 100, 20);
-
-    if (!started) {
-      ctx.fillText('Press SPACE or click to start', canvas.width / 2 - 90, canvas.height / 2);
-    } else if (gameOver) {
-      ctx.fillText('Game Over -- press SPACE to restart', canvas.width / 2 - 115, canvas.height / 2);
-    }
-  }
-
-  function loop() {
-    update();
-    draw();
-    requestAnimationFrame(loop);
-  }
-  loop();
-})();
-</script>
 """
 
 PLAYER_MODEL_PATH = "models/best.pt"
@@ -251,26 +138,6 @@ def _style_fig(fig, height=280):
     return fig
 
 
-def circular_frame_html(frame_bgr, size=340):
-    ok, buf = cv2.imencode(".jpg", frame_bgr, [cv2.IMWRITE_JPEG_QUALITY, 70])
-    b64 = base64.b64encode(buf).decode("ascii")
-    return f"""
-    <style>
-    @keyframes spin {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
-    </style>
-    <div style="display:flex; justify-content:center; margin:12px 0;">
-      <div style="position:relative; width:{size}px; height:{size}px;">
-        <div style="position:absolute; inset:0; border-radius:50%;
-             background:conic-gradient(from 0deg, #cde2fb, #2a78d6, #184f95, #2a78d6, #cde2fb);
-             animation: spin 3s linear infinite;"></div>
-        <div style="position:absolute; inset:6px; border-radius:50%; overflow:hidden; background:#000;">
-          <img src="data:image/jpeg;base64,{b64}" style="width:100%; height:100%; object-fit:cover;">
-        </div>
-      </div>
-    </div>
-    """
-
-
 def get_jersey_color(frame, box):
     x1, y1, x2, y2 = box.astype(int)
     bw, bh = x2 - x1, y2 - y1
@@ -289,9 +156,7 @@ def get_jersey_color(frame, box):
 
 
 def process_video(video_path, max_frames):
-    """Yields the output path first, then (frame_index, annotated_frame_bgr) per
-    frame, and finally ("summary", {0: frames_won, 1: frames_won}) tallying which
-    team's players stayed closer to the ball on average each frame."""
+    """Yields the output path first, then (frame_index, annotated_frame_bgr) per frame."""
     player_model, pitch_model = load_models()
     player_class_id = list(player_model.names.values()).index("player")
     ball_class_id = list(player_model.names.values()).index("ball")
@@ -323,7 +188,6 @@ def process_video(video_path, max_frames):
     box_annotator = sv.BoxAnnotator(color=TEAM_PALETTE)
     label_annotator = sv.LabelAnnotator(color=TEAM_PALETTE)
     last_transformer = None
-    ball_proximity_wins = {0: 0, 1: 0}
 
     frame_idx = 0
     while cap.isOpened() and frame_idx < max_frames:
@@ -373,19 +237,6 @@ def process_video(video_path, max_frames):
             anchors = detections.get_anchors_coordinates(anchor=sv.Position.BOTTOM_CENTER)
             pitch_xy = last_transformer.transform_points(anchors)
 
-            ball_idx = next(
-                (i for i, cls in enumerate(detections.class_id) if cls == ball_class_id), None
-            )
-            if ball_idx is not None:
-                ball_xy = pitch_xy[ball_idx]
-                team_a_dists = [np.linalg.norm(pitch_xy[i] - ball_xy) for i, t in team_by_index.items() if t == 0]
-                team_b_dists = [np.linalg.norm(pitch_xy[i] - ball_xy) for i, t in team_by_index.items() if t == 1]
-                if team_a_dists and team_b_dists:
-                    if np.mean(team_a_dists) < np.mean(team_b_dists):
-                        ball_proximity_wins[0] += 1
-                    else:
-                        ball_proximity_wins[1] += 1
-
             radar = draw_pitch(CONFIG)
             for i, xy in enumerate(pitch_xy):
                 team = team_by_index.get(i)
@@ -402,7 +253,6 @@ def process_video(video_path, max_frames):
 
     cap.release()
     writer.release()
-    yield "summary", ball_proximity_wins
 
 
 def handle_stripe_return():
@@ -498,14 +348,6 @@ with st.sidebar:
                 else:
                     st.info("That email is already on the waitlist.")
 
-    st.markdown("---")
-    st.subheader("🎮 Prediction game")
-    total_points = db.get_total_points()
-    total, correct = db.get_prediction_stats()
-    st.metric("Points", total_points)
-    if total > 0:
-        st.caption(f"{correct}/{total} correct predictions")
-
     run_clicked = st.button("Run analysis", type="primary", disabled=video_path is None)
 
 st.markdown(
@@ -520,62 +362,35 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-prediction = st.radio(
-    "🎯 Before you run it: which team do you think will control the ball more in this clip?",
-    ["Team A", "Team B"],
-    horizontal=True,
-)
-
 if run_clicked and video_path is not None:
     progress_bar = st.progress(0.0, text="Processing video...")
     frame_placeholder = st.empty()
 
-    st.caption("Bored waiting? Play while it processes:")
-    components.html(DINO_GAME_HTML, height=210)  # rendered once, keeps running independently of the loop below
-
     gen = process_video(video_path, max_frames)
     output_path = next(gen)  # the generator yields the output file path first
-    dominance = {0: 0, 1: 0}
     frames_done = 0
-    for item in gen:
-        if item[0] == "summary":
-            dominance = item[1]
-            break
-        frame_idx, annotated = item
+    for frame_idx, annotated in gen:
         frames_done = frame_idx
-        frame_placeholder.markdown(circular_frame_html(annotated), unsafe_allow_html=True)
+        frame_placeholder.image(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB))
         progress_bar.progress(frame_idx / max_frames, text=f"Processing video... {int(frame_idx / max_frames * 100)}%")
 
     progress_bar.empty()
-
-    actual_team = "Team A" if dominance[0] >= dominance[1] else "Team B"
-    correct, points = db.add_prediction(video_label or "uploaded video", prediction, actual_team)
     db.add_history(video_label or "uploaded video", frames_done, output_path)
 
     # persist results in session_state: local variables here vanish on the next
     # Streamlit rerun (e.g. clicking an expander elsewhere), which broke the
-    # download button and result banner right after they first appeared
-    st.session_state["last_result"] = {
-        "output_path": output_path,
-        "actual_team": actual_team,
-        "correct": correct,
-        "points": points,
-    }
+    # download button right after it first appeared
+    st.session_state["last_result"] = {"output_path": output_path}
 
 if "last_result" in st.session_state:
     result = st.session_state["last_result"]
     if os.path.exists(result["output_path"]):
-        st.success("Done! (playback above was live frame-by-frame; download below for the encoded video file)")
+        st.success("Analysis complete — playback above was live frame-by-frame; download below for the encoded video file.")
         with open(result["output_path"], "rb") as f:
             st.download_button(
                 "Download result", f, file_name="tactical_analysis.mp4", mime="video/mp4",
                 key="download_result_btn",
             )
-        if result["correct"]:
-            st.balloons()
-            st.success(f"🎉 Correct! {result['actual_team']} controlled the ball more often (+{result['points']} points)")
-        else:
-            st.info(f"Not quite — {result['actual_team']} actually controlled the ball more often (+{result['points']} points)")
     else:
         st.warning("The processed video file is no longer available (temp file was cleaned up). Run the analysis again to redownload.")
 
@@ -589,19 +404,16 @@ with st.expander("📜 History"):
 
 with st.expander("📊 Analytics Dashboard"):
     history_all = db.get_all_history()
-    predictions_all = db.get_all_predictions()
     waitlist_all = db.get_all_waitlist()
 
-    if not history_all and not predictions_all and not waitlist_all:
+    if not history_all and not waitlist_all:
         st.caption("No data yet — run an analysis or two to populate the dashboard.")
     else:
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         col1.metric("Total analyses", len(history_all))
-        col2.metric("Total predictions", len(predictions_all))
-        col3.metric("Waitlist signups", len(waitlist_all))
+        col2.metric("Waitlist signups", len(waitlist_all))
 
         hist_df = pd.DataFrame([dict(r) for r in history_all]) if history_all else None
-        pred_df = pd.DataFrame([dict(r) for r in predictions_all]) if predictions_all else None
         wl_df = pd.DataFrame([dict(r) for r in waitlist_all]) if waitlist_all else None
 
         if hist_df is not None:
@@ -613,25 +425,6 @@ with st.expander("📊 Analytics Dashboard"):
                 marker_color=TEAM_B_COLOR, text=daily["count"], textposition="outside",
             ))
             st.plotly_chart(_style_fig(fig), use_container_width=True)
-
-        if pred_df is not None:
-            st.subheader("Prediction accuracy")
-            counts = pred_df["correct"].value_counts()
-            values = [int(counts.get(1, 0)), int(counts.get(0, 0))]
-            fig = go.Figure(go.Bar(
-                x=["Correct", "Incorrect"], y=values,
-                marker_color=[STATUS_GOOD, STATUS_CRITICAL], text=values, textposition="outside",
-            ))
-            st.plotly_chart(_style_fig(fig), use_container_width=True)
-
-            st.subheader("Which team dominates more often")
-            team_counts = pred_df["actual_team"].value_counts()
-            team_values = [int(team_counts.get("Team A", 0)), int(team_counts.get("Team B", 0))]
-            fig2 = go.Figure(go.Bar(
-                x=["Team A", "Team B"], y=team_values,
-                marker_color=[TEAM_A_COLOR, TEAM_B_COLOR], text=team_values, textposition="outside",
-            ))
-            st.plotly_chart(_style_fig(fig2), use_container_width=True)
 
         if wl_df is not None:
             wl_df["date"] = pd.to_datetime(wl_df["timestamp"]).dt.date
@@ -646,16 +439,12 @@ with st.expander("📊 Analytics Dashboard"):
         st.markdown("---")
         st.subheader("Export for Power BI / Excel")
         st.caption("Download CSVs and open them in Power BI Desktop (Get Data → Text/CSV) to build your own reports.")
-        exp_col1, exp_col2, exp_col3 = st.columns(3)
+        exp_col1, exp_col2 = st.columns(2)
         exp_col1.download_button(
             "history.csv", hist_df.to_csv(index=False) if hist_df is not None else "",
             file_name="history.csv", mime="text/csv", disabled=hist_df is None,
         )
         exp_col2.download_button(
-            "predictions.csv", pred_df.to_csv(index=False) if pred_df is not None else "",
-            file_name="predictions.csv", mime="text/csv", disabled=pred_df is None,
-        )
-        exp_col3.download_button(
             "waitlist.csv", wl_df.to_csv(index=False) if wl_df is not None else "",
             file_name="waitlist.csv", mime="text/csv", disabled=wl_df is None,
         )

@@ -31,17 +31,6 @@ def init_db():
     """)
     conn.execute("INSERT OR IGNORE INTO subscription (id, is_premium) VALUES (1, 0)")
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS predictions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT NOT NULL,
-            video_name TEXT NOT NULL,
-            predicted_team TEXT NOT NULL,
-            actual_team TEXT NOT NULL,
-            correct INTEGER NOT NULL,
-            points_awarded INTEGER NOT NULL
-        )
-    """)
-    conn.execute("""
         CREATE TABLE IF NOT EXISTS waitlist (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT NOT NULL,
@@ -89,36 +78,6 @@ def set_premium(is_premium_flag, stripe_customer_id=None):
     conn.close()
 
 
-def add_prediction(video_name, predicted_team, actual_team):
-    correct = predicted_team == actual_team
-    points = 10 if correct else 0
-    conn = get_connection()
-    conn.execute(
-        "INSERT INTO predictions (timestamp, video_name, predicted_team, actual_team, correct, points_awarded) "
-        "VALUES (?, ?, ?, ?, ?, ?)",
-        (datetime.now(timezone.utc).isoformat(), video_name, predicted_team, actual_team, int(correct), points),
-    )
-    conn.commit()
-    conn.close()
-    return correct, points
-
-
-def get_total_points():
-    conn = get_connection()
-    row = conn.execute("SELECT COALESCE(SUM(points_awarded), 0) AS total FROM predictions").fetchone()
-    conn.close()
-    return row["total"]
-
-
-def get_prediction_stats():
-    conn = get_connection()
-    row = conn.execute(
-        "SELECT COUNT(*) AS total, COALESCE(SUM(correct), 0) AS correct FROM predictions"
-    ).fetchone()
-    conn.close()
-    return row["total"], row["correct"]
-
-
 def add_to_waitlist(email, name=None):
     conn = get_connection()
     try:
@@ -144,13 +103,6 @@ def get_waitlist_count():
 def get_all_history():
     conn = get_connection()
     rows = conn.execute("SELECT * FROM history ORDER BY id").fetchall()
-    conn.close()
-    return rows
-
-
-def get_all_predictions():
-    conn = get_connection()
-    rows = conn.execute("SELECT * FROM predictions ORDER BY id").fetchall()
     conn.close()
     return rows
 
