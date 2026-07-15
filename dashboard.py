@@ -192,6 +192,48 @@ div[data-testid="stMetricValue"] { color: #008080; }
   from { transform: rotate3d(0.3, 1, 0, 0deg); }
   to   { transform: rotate3d(0.3, 1, 0, 360deg); }
 }
+.feature-grid-3d {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 32px;
+  padding: 48px 24px;
+  animation: fadeInUp 0.5s ease-out;
+}
+.feature-card-3d {
+  text-align: center;
+  padding: 12px;
+}
+.feature-card-3d .logo-3d-small-wrap {
+  display: flex;
+  justify-content: center;
+  perspective: 700px;
+  margin-bottom: 18px;
+}
+.feature-card-3d .logo-3d-small {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.75), transparent 42%),
+    conic-gradient(from 0deg, #66b2b2, #008080, #003366, #001a33, #003366, #008080, #66b2b2);
+  box-shadow:
+    0 0 24px rgba(0,128,128,0.3),
+    inset -6px -6px 14px rgba(0,0,0,0.35),
+    inset 6px 6px 14px rgba(255,255,255,0.35);
+  animation: spin3d 7s linear infinite;
+}
+.feature-card-3d h4 {
+  margin: 0 0 8px 0;
+  color: #003366;
+  font-size: 1.05rem;
+}
+.feature-card-3d p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.landing-spacer { height: 32px; }
 </style>
 """
 
@@ -443,8 +485,18 @@ if "entered_app" not in st.session_state:
     st.session_state.entered_app = False
 
 if not st.session_state.entered_app:
+    feature_cards_html = "".join(
+        f"""<div class="feature-card-3d">
+              <div class="logo-3d-small-wrap">
+                <div class="logo-3d-small" style="animation-delay: -{i * 1.5}s;"></div>
+              </div>
+              <h4>{title}</h4>
+              <p>{desc}</p>
+            </div>"""
+        for i, (title, desc) in enumerate(PIPELINE_FEATURES)
+    )
     st.markdown(
-        """
+        f"""
         <div class="viz-root">
           <div class="logo-3d-wrap">
             <div class="logo-3d"></div>
@@ -462,17 +514,12 @@ if not st.session_state.entered_app:
             live tactical radar view — powered by a custom-trained detector, not a
             generic off-the-shelf model.</p>
           </div>
+          <div class="feature-grid-3d">{feature_cards_html}</div>
+          <div class="landing-spacer"></div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
-    st.markdown("#### What it does")
-    cols = st.columns(4)
-    for col, (title, desc) in zip(cols, PIPELINE_FEATURES):
-        with col:
-            st.markdown(f"**{title}**")
-            st.caption(desc)
 
     st.markdown("<br>", unsafe_allow_html=True)
     _, mid_col, _ = st.columns([1, 1, 1])
