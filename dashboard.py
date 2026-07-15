@@ -111,40 +111,49 @@ div[data-testid="stExpander"]:hover {
 div[data-testid="stMetric"] {
   animation: fadeInUp 0.4s ease-out;
 }
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  margin: 12px 0 20px 0;
-}
-.feature-card {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 18px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  animation: fadeInUp 0.4s ease-out;
-}
-.feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 28px rgba(0,0,0,0.10);
-}
-.feature-card .badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border-radius: 50%;
-  background: linear-gradient(135deg, #2a78d6, #184f95);
-  color: white; font-size: 0.8rem; font-weight: 700;
-  margin-bottom: 10px;
-}
-.feature-card h3 { margin: 0 0 6px 0; font-size: 1.05rem; color: var(--text-primary); }
-.feature-card p { margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; }
 .stTabs [data-baseweb="tab-list"] { gap: 4px; }
 .stTabs [data-baseweb="tab"] {
   border-radius: 8px 8px 0 0;
   padding: 8px 16px;
 }
+.apple-section {
+  padding: 56px 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  animation: fadeInUp 0.5s ease-out;
+}
+.apple-section:last-child { border-bottom: none; }
+.apple-section .eyebrow {
+  font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #2a78d6; margin-bottom: 10px;
+}
+.apple-section h2 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 700;
+  margin: 0 0 14px 0;
+  color: var(--text-primary);
+}
+.apple-section p {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 640px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+.stat-row {
+  display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
+  margin: 40px 0 8px 0;
+}
+.stat-row .stat-value {
+  font-size: 2.4rem; font-weight: 700; color: var(--text-primary);
+}
+.stat-row .stat-label {
+  font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;
+}
 </style>
 """
+
+CONTACT_EMAIL = "inehalsinha@gmail.com"
 
 PIPELINE_FEATURES = [
     ("Custom Object Detection", "YOLOv8 trained from scratch (100 epochs) on a Roboflow dataset — detects players, goalkeepers, referees, and the ball. Not a pretrained/off-the-shelf model."),
@@ -435,9 +444,31 @@ with st.sidebar:
                 )
                 st.link_button("Continue to payment", checkout_session.url)
 
-tab_analyze, tab_history, tab_analytics, tab_waitlist, tab_features = st.tabs(
-    ["Analyze", "History", "Analytics", "Waitlist", "Features"]
+tab_home, tab_analyze, tab_history, tab_analytics, tab_waitlist, tab_features, tab_contact = st.tabs(
+    ["Home", "Analyze", "History", "Analytics", "Waitlist", "Features", "Contact"]
 )
+
+with tab_home:
+    st.markdown(
+        """
+        <div class="viz-root">
+          <div class="apple-section">
+            <div class="eyebrow">Computer Vision · Sports Analytics</div>
+            <h2>See the game the way a coach does.</h2>
+            <p>Upload match footage and get player detection, team identification, and a
+            live tactical radar view — powered by a custom-trained detector, not a
+            generic off-the-shelf model.</p>
+            <div class="stat-row">
+              <div><div class="stat-value">4</div><div class="stat-label">Detected classes</div></div>
+              <div><div class="stat-value">15.8K</div><div class="stat-label">Training annotations</div></div>
+              <div><div class="stat-value">77%</div><div class="stat-label">Overall mAP50</div></div>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.info("Head to the **Analyze** tab in the sidebar's flow to run it on a real clip.")
 
 with tab_analyze:
     st.markdown(
@@ -562,16 +593,15 @@ with tab_waitlist:
                     st.info("That email is already on the waitlist.")
 
 with tab_features:
-    st.subheader("How the pipeline works")
-    cards_html = "".join(
-        f"""<div class="feature-card">
-              <span class="badge">{i + 1:02d}</span>
-              <h3>{title}</h3>
+    sections_html = "".join(
+        f"""<div class="apple-section">
+              <div class="eyebrow">Step {i + 1:02d}</div>
+              <h2>{title}</h2>
               <p>{desc}</p>
             </div>"""
         for i, (title, desc) in enumerate(PIPELINE_FEATURES)
     )
-    st.markdown(f'<div class="viz-root"><div class="feature-grid">{cards_html}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="viz-root">{sections_html}</div>', unsafe_allow_html=True)
 
     st.subheader("Model performance (held-out test set)")
     overall = MODEL_METRICS[MODEL_METRICS["Class"] == "All (overall)"].iloc[0]
@@ -583,4 +613,18 @@ with tab_features:
     st.dataframe(
         MODEL_METRICS.style.format({"Precision": "{:.0%}", "Recall": "{:.0%}", "mAP50": "{:.0%}"}),
         use_container_width=True, hide_index=True,
+    )
+
+with tab_contact:
+    st.markdown(
+        f"""
+        <div class="viz-root">
+          <div class="apple-section">
+            <div class="eyebrow">Get in touch</div>
+            <h2>Questions or feedback?</h2>
+            <p>Reach out at <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
