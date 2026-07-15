@@ -134,16 +134,6 @@ div[data-testid="stMetricValue"] { color: #008080; }
   margin: 0 auto;
   line-height: 1.65;
 }
-.stat-row {
-  display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
-  margin: 40px 0 8px 0;
-}
-.stat-row .stat-value {
-  font-size: 2.4rem; font-weight: 700; color: #008080;
-}
-.stat-row .stat-label {
-  font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;
-}
 .photo-hero {
   position: relative;
   height: 380px;
@@ -471,11 +461,6 @@ if not st.session_state.entered_app:
             <p>Upload match footage and get player detection, team identification, and a
             live tactical radar view — powered by a custom-trained detector, not a
             generic off-the-shelf model.</p>
-            <div class="stat-row">
-              <div><div class="stat-value">4</div><div class="stat-label">Detected classes</div></div>
-              <div><div class="stat-value">15.8K</div><div class="stat-label">Training annotations</div></div>
-              <div><div class="stat-value">77%</div><div class="stat-label">Overall mAP50</div></div>
-            </div>
           </div>
         </div>
         """,
