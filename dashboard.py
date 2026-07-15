@@ -213,6 +213,30 @@ div[data-testid="stMetricValue"] { color: #ff4fc3; }
   max-width: 560px;
   color: #f5c6e8;
 }
+.logo-3d-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 36px 0 12px 0;
+  perspective: 900px;
+  animation: fadeInUp 0.5s ease-out;
+}
+.logo-3d {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.65), transparent 42%),
+    conic-gradient(from 0deg, #ff9fe0, #ff4fc3, #c026d3, #5b0a63, #c026d3, #ff4fc3, #ff9fe0);
+  box-shadow:
+    0 0 70px rgba(255,79,195,0.65),
+    inset -12px -12px 30px rgba(0,0,0,0.45),
+    inset 12px 12px 30px rgba(255,255,255,0.25);
+  animation: spin3d 6s linear infinite;
+}
+@keyframes spin3d {
+  from { transform: rotate3d(0.3, 1, 0, 0deg); }
+  to   { transform: rotate3d(0.3, 1, 0, 360deg); }
+}
 </style>
 """
 
@@ -485,6 +509,9 @@ if not st.session_state.entered_app:
     st.markdown(
         """
         <div class="viz-root">
+          <div class="logo-3d-wrap">
+            <div class="logo-3d"></div>
+          </div>
           <div class="photo-hero">
             <div class="photo-hero-content">
               <div class="eyebrow">Computer Vision · Sports Analytics</div>
