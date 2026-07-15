@@ -129,7 +129,13 @@ div[data-testid="stMetric"] {
   transform: translateY(-4px);
   box-shadow: 0 10px 28px rgba(0,0,0,0.10);
 }
-.feature-card .icon { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+.feature-card .badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, #2a78d6, #184f95);
+  color: white; font-size: 0.8rem; font-weight: 700;
+  margin-bottom: 10px;
+}
 .feature-card h3 { margin: 0 0 6px 0; font-size: 1.05rem; color: var(--text-primary); }
 .feature-card p { margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; }
 .stTabs [data-baseweb="tab-list"] { gap: 4px; }
@@ -141,10 +147,16 @@ div[data-testid="stMetric"] {
 """
 
 PIPELINE_FEATURES = [
-    ("🎯", "Custom Object Detection", "YOLOv8 trained from scratch (100 epochs) on a Roboflow dataset — detects players, goalkeepers, referees, and the ball. Not a pretrained/off-the-shelf model."),
-    ("🔗", "Multi-Object Tracking", "ByteTrack assigns each detection a persistent ID across frames, so players are tracked through the clip rather than re-detected independently every frame."),
-    ("👕", "Team Classification", "Unsupervised KMeans clustering on jersey color (with HSV-based grass exclusion) automatically splits players into two teams — no manual labeling."),
-    ("🗺️", "Tactical Radar", "A separate pitch-keypoint model drives a live homography, projecting every player's position onto a flat, top-down tactical view in real time."),
+    ("Custom Object Detection", "YOLOv8 trained from scratch (100 epochs) on a Roboflow dataset — detects players, goalkeepers, referees, and the ball. Not a pretrained/off-the-shelf model."),
+    ("Multi-Object Tracking", "ByteTrack assigns each detection a persistent ID across frames, so players are tracked through the clip rather than re-detected independently every frame."),
+    ("Team Classification", "Unsupervised KMeans clustering on jersey color (with HSV-based grass exclusion) automatically splits players into two teams — no manual labeling."),
+    ("Tactical Radar", "A separate pitch-keypoint model drives a live homography, projecting every player's position onto a flat, top-down tactical view in real time."),
+]
+
+VIDEO_SOURCES = [
+    ("Roboflow Universe", "https://universe.roboflow.com/", "Search \"football\" or \"soccer\" for open datasets with match video/images (this project's training data came from here)."),
+    ("Kaggle: DFL Bundesliga Data Shootout", "https://www.kaggle.com/competitions/dfl-bundesliga-data-shootout", "The original match footage source behind the sample clips bundled with this app."),
+    ("roboflow/sports (GitHub)", "https://github.com/roboflow/sports", "The repo this project's homography/radar code builds on — its setup script links directly to more sample clips."),
 ]
 
 MODEL_METRICS = pd.DataFrame([
@@ -188,13 +200,13 @@ if STRIPE_SECRET_KEY:
 
 db.init_db()
 
-st.set_page_config(page_title="AI Tactical Dashboard", layout="wide", page_icon="⚽")
+st.set_page_config(page_title="AI Tactical Dashboard", layout="wide")
 st.markdown(PAGE_CSS, unsafe_allow_html=True)
 st.markdown(
     """
     <div class="viz-root">
       <div class="hero-banner">
-        <h1>⚽ AI Tactical Dashboard</h1>
+        <h1>AI Tactical Dashboard</h1>
         <p>Custom-trained YOLOv8 detection · ByteTrack · team classification · homography-based tactical radar</p>
       </div>
     </div>
@@ -378,10 +390,14 @@ with st.sidebar:
             tmp.write(uploaded.read())
             video_path = tmp.name
 
+        with st.expander("Where to find more videos"):
+            for name, url, desc in VIDEO_SOURCES:
+                st.markdown(f"**[{name}]({url})**  \n{desc}")
+
     if PAYMENTS_ENABLED:
         premium = db.is_premium()
         tier_max = PREMIUM_TIER_MAX_FRAMES if premium else FREE_TIER_MAX_FRAMES
-        st.caption(f"{'⭐ Premium' if premium else 'Free tier'} — up to {tier_max} frames per run")
+        st.caption(f"{'Premium' if premium else 'Free tier'} — up to {tier_max} frames per run")
     else:
         tier_max = SINGLE_TIER_MAX_FRAMES
 
@@ -390,7 +406,7 @@ with st.sidebar:
         help="Lower = faster preview. Sample clips are ~30fps.",
     )
 
-    run_clicked = st.button("▶ Run analysis", type="primary", disabled=video_path is None, use_container_width=True)
+    run_clicked = st.button("Run analysis", type="primary", disabled=video_path is None, use_container_width=True)
 
     if PAYMENTS_ENABLED and not premium:
         st.markdown("---")
@@ -419,24 +435,8 @@ with st.sidebar:
                 )
                 st.link_button("Continue to payment", checkout_session.url)
 
-    if not PAYMENTS_ENABLED:
-        st.markdown("---")
-        st.subheader("⭐ Premium waitlist")
-        st.caption(f"Payments aren't live yet — join the waitlist and we'll email you when Premium launches. ({db.get_waitlist_count()} people so far)")
-        with st.form("waitlist_form", clear_on_submit=True):
-            wl_name = st.text_input("Name (optional)")
-            wl_email = st.text_input("Email")
-            submitted = st.form_submit_button("Join the waitlist")
-            if submitted:
-                if "@" not in wl_email or "." not in wl_email.split("@")[-1]:
-                    st.error("Please enter a valid email address.")
-                elif db.add_to_waitlist(wl_email.strip(), wl_name.strip() or None):
-                    st.success("You're on the list!")
-                else:
-                    st.info("That email is already on the waitlist.")
-
-tab_analyze, tab_history, tab_analytics, tab_features = st.tabs(
-    ["🎥 Analyze", "📜 History", "📊 Analytics", "✨ Features"]
+tab_analyze, tab_history, tab_analytics, tab_waitlist, tab_features = st.tabs(
+    ["Analyze", "History", "Analytics", "Waitlist", "Features"]
 )
 
 with tab_analyze:
@@ -543,24 +543,44 @@ with tab_analytics:
             file_name="waitlist.csv", mime="text/csv", disabled=wl_df is None,
         )
 
+with tab_waitlist:
+    st.subheader("Premium Waitlist")
+    if PAYMENTS_ENABLED:
+        st.caption("Manage your Premium subscription above in the sidebar.")
+    else:
+        st.caption(f"Payments aren't live yet — join the waitlist and we'll email you when Premium launches. ({db.get_waitlist_count()} people so far)")
+        with st.form("waitlist_form", clear_on_submit=True):
+            wl_name = st.text_input("Name (optional)")
+            wl_email = st.text_input("Email")
+            submitted = st.form_submit_button("Join the waitlist")
+            if submitted:
+                if "@" not in wl_email or "." not in wl_email.split("@")[-1]:
+                    st.error("Please enter a valid email address.")
+                elif db.add_to_waitlist(wl_email.strip(), wl_name.strip() or None):
+                    st.success("You're on the list!")
+                else:
+                    st.info("That email is already on the waitlist.")
+
 with tab_features:
     st.subheader("How the pipeline works")
     cards_html = "".join(
         f"""<div class="feature-card">
-              <span class="icon">{icon}</span>
+              <span class="badge">{i + 1:02d}</span>
               <h3>{title}</h3>
               <p>{desc}</p>
             </div>"""
-        for icon, title, desc in PIPELINE_FEATURES
+        for i, (title, desc) in enumerate(PIPELINE_FEATURES)
     )
     st.markdown(f'<div class="viz-root"><div class="feature-grid">{cards_html}</div></div>', unsafe_allow_html=True)
 
     st.subheader("Model performance (held-out test set)")
+    overall = MODEL_METRICS[MODEL_METRICS["Class"] == "All (overall)"].iloc[0]
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Precision", f"{overall['Precision']:.0%}")
+    m2.metric("Recall", f"{overall['Recall']:.0%}")
+    m3.metric("mAP50", f"{overall['mAP50']:.0%}")
+
     st.dataframe(
-        MODEL_METRICS.style.format({"Precision": "{:.2f}", "Recall": "{:.2f}", "mAP50": "{:.2f}"}),
+        MODEL_METRICS.style.format({"Precision": "{:.0%}", "Recall": "{:.0%}", "mAP50": "{:.0%}"}),
         use_container_width=True, hide_index=True,
-    )
-    st.caption(
-        "Ball detection lags the other classes (mAP50 0.30) — it's a small, fast-moving "
-        "object with far fewer training examples than players, not a pipeline bug."
     )
