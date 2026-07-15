@@ -460,7 +460,57 @@ if PAYMENTS_ENABLED:
         st.success("Payment confirmed — Premium unlocked!")
         del st.session_state["just_upgraded"]
 
+if "entered_app" not in st.session_state:
+    st.session_state.entered_app = False
+
+if not st.session_state.entered_app:
+    hero_b64 = load_image_b64(HERO_IMAGE_PATH) if os.path.exists(HERO_IMAGE_PATH) else None
+    st.markdown(
+        f"""
+        <div class="viz-root">
+          {f'''<div class="photo-hero" style="--hero-img: url('data:image/jpeg;base64,{hero_b64}');">
+            <div class="photo-hero-content">
+              <div class="eyebrow">Computer Vision · Sports Analytics</div>
+              <h1>TacticEye</h1>
+              <p>See the game the way a coach does — player detection, team
+              identification, and a live tactical radar, from a custom-trained model.</p>
+            </div>
+          </div>''' if hero_b64 else ''}
+          <div class="apple-section">
+            <p>Upload match footage and get player detection, team identification, and a
+            live tactical radar view — powered by a custom-trained detector, not a
+            generic off-the-shelf model.</p>
+            <div class="stat-row">
+              <div><div class="stat-value">4</div><div class="stat-label">Detected classes</div></div>
+              <div><div class="stat-value">15.8K</div><div class="stat-label">Training annotations</div></div>
+              <div><div class="stat-value">77%</div><div class="stat-label">Overall mAP50</div></div>
+            </div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### What it does")
+    cols = st.columns(4)
+    for col, (title, desc) in zip(cols, PIPELINE_FEATURES):
+        with col:
+            st.markdown(f"**{title}**")
+            st.caption(desc)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    _, mid_col, _ = st.columns([1, 1, 1])
+    with mid_col:
+        if st.button("Launch the app", type="primary", use_container_width=True):
+            st.session_state.entered_app = True
+            st.rerun()
+    st.stop()
+
 with st.sidebar:
+    if st.button("← Back to Home"):
+        st.session_state.entered_app = False
+        st.rerun()
+    st.markdown("---")
     st.header("Settings")
     source_choice = st.radio("Video source", ["Sample clip", "Upload your own"])
 
@@ -522,38 +572,9 @@ with st.sidebar:
                 )
                 st.link_button("Continue to payment", checkout_session.url)
 
-tab_home, tab_features, tab_analyze, tab_history, tab_analytics, tab_waitlist, tab_contact = st.tabs(
-    ["Home", "Features", "Analyze", "History", "Analytics", "Waitlist", "Contact"]
+tab_features, tab_analyze, tab_history, tab_analytics, tab_waitlist, tab_contact = st.tabs(
+    ["Features", "Analyze", "History", "Analytics", "Waitlist", "Contact"]
 )
-
-with tab_home:
-    hero_b64 = load_image_b64(HERO_IMAGE_PATH) if os.path.exists(HERO_IMAGE_PATH) else None
-    st.markdown(
-        f"""
-        <div class="viz-root">
-          {f'''<div class="photo-hero" style="--hero-img: url('data:image/jpeg;base64,{hero_b64}');">
-            <div class="photo-hero-content">
-              <div class="eyebrow">Computer Vision · Sports Analytics</div>
-              <h1>TacticEye</h1>
-              <p>See the game the way a coach does — player detection, team
-              identification, and a live tactical radar, from a custom-trained model.</p>
-            </div>
-          </div>''' if hero_b64 else ''}
-          <div class="apple-section">
-            <p>Upload match footage and get player detection, team identification, and a
-            live tactical radar view — powered by a custom-trained detector, not a
-            generic off-the-shelf model.</p>
-            <div class="stat-row">
-              <div><div class="stat-value">4</div><div class="stat-label">Detected classes</div></div>
-              <div><div class="stat-value">15.8K</div><div class="stat-label">Training annotations</div></div>
-              <div><div class="stat-value">77%</div><div class="stat-label">Overall mAP50</div></div>
-            </div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.info("Head to the **Analyze** tab in the sidebar's flow to run it on a real clip.")
 
 with tab_analyze:
     st.markdown(
