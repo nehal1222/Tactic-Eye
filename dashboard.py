@@ -444,8 +444,8 @@ with st.sidebar:
                 )
                 st.link_button("Continue to payment", checkout_session.url)
 
-tab_home, tab_analyze, tab_history, tab_analytics, tab_waitlist, tab_features, tab_contact = st.tabs(
-    ["Home", "Analyze", "History", "Analytics", "Waitlist", "Features", "Contact"]
+tab_home, tab_features, tab_analyze, tab_history, tab_analytics, tab_waitlist, tab_contact = st.tabs(
+    ["Home", "Features", "Analyze", "History", "Analytics", "Waitlist", "Contact"]
 )
 
 with tab_home:
