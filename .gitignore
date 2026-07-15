@@ -18,6 +18,7 @@ app_data.db
 outputs/
 videos/
 runs/
+powerbi_export/
 
 # Large downloaded assets (recreate via setup instructions in README)
 roboflow_dataset/

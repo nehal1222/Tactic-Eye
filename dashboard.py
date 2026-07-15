@@ -111,8 +111,49 @@ div[data-testid="stExpander"]:hover {
 div[data-testid="stMetric"] {
   animation: fadeInUp 0.4s ease-out;
 }
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin: 12px 0 20px 0;
+}
+.feature-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: fadeInUp 0.4s ease-out;
+}
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.10);
+}
+.feature-card .icon { font-size: 1.8rem; margin-bottom: 8px; display: block; }
+.feature-card h3 { margin: 0 0 6px 0; font-size: 1.05rem; color: var(--text-primary); }
+.feature-card p { margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; }
+.stTabs [data-baseweb="tab-list"] { gap: 4px; }
+.stTabs [data-baseweb="tab"] {
+  border-radius: 8px 8px 0 0;
+  padding: 8px 16px;
+}
 </style>
 """
+
+PIPELINE_FEATURES = [
+    ("🎯", "Custom Object Detection", "YOLOv8 trained from scratch (100 epochs) on a Roboflow dataset — detects players, goalkeepers, referees, and the ball. Not a pretrained/off-the-shelf model."),
+    ("🔗", "Multi-Object Tracking", "ByteTrack assigns each detection a persistent ID across frames, so players are tracked through the clip rather than re-detected independently every frame."),
+    ("👕", "Team Classification", "Unsupervised KMeans clustering on jersey color (with HSV-based grass exclusion) automatically splits players into two teams — no manual labeling."),
+    ("🗺️", "Tactical Radar", "A separate pitch-keypoint model drives a live homography, projecting every player's position onto a flat, top-down tactical view in real time."),
+]
+
+MODEL_METRICS = pd.DataFrame([
+    {"Class": "All (overall)", "Precision": 0.857, "Recall": 0.774, "mAP50": 0.774},
+    {"Class": "Player", "Precision": 0.882, "Recall": 0.961, "mAP50": 0.974},
+    {"Class": "Goalkeeper", "Precision": 0.868, "Recall": 1.000, "mAP50": 0.972},
+    {"Class": "Referee", "Precision": 0.679, "Recall": 0.875, "mAP50": 0.845},
+    {"Class": "Ball", "Precision": 1.000, "Recall": 0.260, "mAP50": 0.303},
+])
 
 PLAYER_MODEL_PATH = "models/best.pt"
 PITCH_MODEL_PATH = "sports/examples/soccer/data/football-pitch-detection.pt"
@@ -394,59 +435,68 @@ with st.sidebar:
                 else:
                     st.info("That email is already on the waitlist.")
 
-st.markdown(
-    f"""
-    <div class="viz-root">
-      <span class="legend-chip"><span class="legend-dot" style="background:{TEAM_A_COLOR};"></span>Team A</span>
-      <span class="legend-chip"><span class="legend-dot" style="background:{TEAM_B_COLOR};"></span>Team B</span>
-      <span class="legend-chip"><span class="legend-dot" style="background:#ffd700;"></span>Referee / Goalkeeper</span>
-      <span class="legend-chip"><span class="legend-dot" style="background:#000000;"></span>Ball</span>
-    </div>
-    """,
-    unsafe_allow_html=True,
+tab_analyze, tab_history, tab_analytics, tab_features = st.tabs(
+    ["🎥 Analyze", "📜 History", "📊 Analytics", "✨ Features"]
 )
 
-if run_clicked and video_path is not None:
-    progress_bar = st.progress(0.0, text="Processing video...")
-    frame_placeholder = st.empty()
+with tab_analyze:
+    st.markdown(
+        f"""
+        <div class="viz-root">
+          <span class="legend-chip"><span class="legend-dot" style="background:{TEAM_A_COLOR};"></span>Team A</span>
+          <span class="legend-chip"><span class="legend-dot" style="background:{TEAM_B_COLOR};"></span>Team B</span>
+          <span class="legend-chip"><span class="legend-dot" style="background:#ffd700;"></span>Referee / Goalkeeper</span>
+          <span class="legend-chip"><span class="legend-dot" style="background:#000000;"></span>Ball</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    gen = process_video(video_path, max_frames)
-    output_path = next(gen)  # the generator yields the output file path first
-    frames_done = 0
-    for frame_idx, annotated in gen:
-        frames_done = frame_idx
-        frame_placeholder.image(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB))
-        progress_bar.progress(frame_idx / max_frames, text=f"Processing video... {int(frame_idx / max_frames * 100)}%")
+    if run_clicked and video_path is not None:
+        progress_bar = st.progress(0.0, text="Processing video...")
+        frame_placeholder = st.empty()
 
-    progress_bar.empty()
-    db.add_history(video_label or "uploaded video", frames_done, output_path)
+        gen = process_video(video_path, max_frames)
+        output_path = next(gen)  # the generator yields the output file path first
+        frames_done = 0
+        for frame_idx, annotated in gen:
+            frames_done = frame_idx
+            frame_placeholder.image(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB))
+            progress_bar.progress(frame_idx / max_frames, text=f"Processing video... {int(frame_idx / max_frames * 100)}%")
 
-    # persist results in session_state: local variables here vanish on the next
-    # Streamlit rerun (e.g. clicking an expander elsewhere), which broke the
-    # download button right after it first appeared
-    st.session_state["last_result"] = {"output_path": output_path}
+        progress_bar.empty()
+        db.add_history(video_label or "uploaded video", frames_done, output_path)
 
-if "last_result" in st.session_state:
-    result = st.session_state["last_result"]
-    if os.path.exists(result["output_path"]):
-        st.success("Analysis complete — playback above was live frame-by-frame; download below for the encoded video file.")
-        with open(result["output_path"], "rb") as f:
-            st.download_button(
-                "Download result", f, file_name="tactical_analysis.mp4", mime="video/mp4",
-                key="download_result_btn",
-            )
-    else:
-        st.warning("The processed video file is no longer available (temp file was cleaned up). Run the analysis again to redownload.")
+        # persist results in session_state: local variables here vanish on the next
+        # Streamlit rerun (e.g. switching tabs), which broke the download button
+        # right after it first appeared
+        st.session_state["last_result"] = {"output_path": output_path}
 
-with st.expander("📜 History"):
+    if "last_result" in st.session_state:
+        result = st.session_state["last_result"]
+        if os.path.exists(result["output_path"]):
+            st.success("Analysis complete — playback above was live frame-by-frame; download below for the encoded video file.")
+            with open(result["output_path"], "rb") as f:
+                st.download_button(
+                    "Download result", f, file_name="tactical_analysis.mp4", mime="video/mp4",
+                    key="download_result_btn",
+                )
+        else:
+            st.warning("The processed video file is no longer available (temp file was cleaned up). Run the analysis again to redownload.")
+
+with tab_history:
     history_rows = db.get_history()
     if not history_rows:
-        st.caption("No analyses run yet.")
+        st.caption("No analyses run yet — run one from the Analyze tab.")
     else:
-        for row in history_rows:
-            st.text(f"{row['timestamp'][:19]} — {row['video_name']} ({row['frames_processed']} frames)")
+        hist_display = pd.DataFrame([dict(r) for r in history_rows])
+        hist_display["timestamp"] = pd.to_datetime(hist_display["timestamp"]).dt.strftime("%Y-%m-%d %H:%M")
+        hist_display = hist_display.rename(columns={
+            "timestamp": "Date", "video_name": "Video", "frames_processed": "Frames",
+        })[["Date", "Video", "Frames"]]
+        st.dataframe(hist_display, use_container_width=True, hide_index=True)
 
-with st.expander("📊 Analytics Dashboard"):
+with tab_analytics:
     history_all = db.get_all_history()
     waitlist_all = db.get_all_waitlist()
 
@@ -492,3 +542,25 @@ with st.expander("📊 Analytics Dashboard"):
             "waitlist.csv", wl_df.to_csv(index=False) if wl_df is not None else "",
             file_name="waitlist.csv", mime="text/csv", disabled=wl_df is None,
         )
+
+with tab_features:
+    st.subheader("How the pipeline works")
+    cards_html = "".join(
+        f"""<div class="feature-card">
+              <span class="icon">{icon}</span>
+              <h3>{title}</h3>
+              <p>{desc}</p>
+            </div>"""
+        for icon, title, desc in PIPELINE_FEATURES
+    )
+    st.markdown(f'<div class="viz-root"><div class="feature-grid">{cards_html}</div></div>', unsafe_allow_html=True)
+
+    st.subheader("Model performance (held-out test set)")
+    st.dataframe(
+        MODEL_METRICS.style.format({"Precision": "{:.2f}", "Recall": "{:.2f}", "mAP50": "{:.2f}"}),
+        use_container_width=True, hide_index=True,
+    )
+    st.caption(
+        "Ball detection lags the other classes (mAP50 0.30) — it's a small, fast-moving "
+        "object with far fewer training examples than players, not a pipeline bug."
+    )

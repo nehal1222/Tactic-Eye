@@ -16,8 +16,15 @@ tactical (top-down) visualization — wrapped in an interactive Streamlit app.
 - **Computes a live homography** from a separate pretrained pitch-keypoint model to
   project player positions from the camera view onto a flat, top-down tactical radar.
 - **Serves it all through a Streamlit app** with live frame-by-frame streaming
-  (rather than waiting on a fully encoded video), a prediction mini-game, run
-  history, and an analytics dashboard.
+  (rather than waiting on a fully encoded video), run history, and an analytics
+  dashboard.
+- **Feeds a Power BI report** built from exported dataset/model/usage CSVs, tying
+  dataset composition directly to model performance (see screenshot below).
+
+## Screenshots
+
+![Streamlit dashboard](docs/dashboard.png)
+![Power BI report](docs/powerbi.png)
 
 ## Architecture
 
@@ -29,9 +36,8 @@ video frame
 ```
 
 **Built from scratch here:** the player/ball/referee/goalkeeper detector (trained on
-this repo's dataset), the team-classification logic, the ball-proximity "dominance"
-metric, and the whole Streamlit app (live streaming UI, history, analytics,
-prediction game, waitlist).
+this repo's dataset), the team-classification logic, and the whole Streamlit app
+(live streaming UI, history, analytics, waitlist).
 
 **Integrated, not reinvented:** the pitch-keypoint detection model and the
 homography/pitch-drawing utilities come from Roboflow's open-source
@@ -89,8 +95,6 @@ python radar.py           # adds pitch homography + radar inset -> outputs/radar
 - Team classification is a simple color-clustering heuristic (KMeans on jersey
   color), not a learned model — works well when kits are visually distinct, degrades
   if a team's kit is close in color to the pitch itself.
-- The "ball control" prediction game metric (average player-to-ball distance per
-  frame) is a lightweight proxy, not a possession-tracking algorithm.
 - Homography is recomputed independently each frame; there's no Kalman-style
   temporal smoothing, so the radar view can jitter on frames with few confidently
   detected pitch keypoints.
