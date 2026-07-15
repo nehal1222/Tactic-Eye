@@ -1,4 +1,3 @@
-import base64
 import os
 import tempfile
 
@@ -26,38 +25,31 @@ TEAM_B_COLOR = "#2a78d6"   # categorical blue
 CHART_INK = "#52514e"
 CHART_GRIDLINE = "#e1e0d9"
 
+PINK = "#ff4fc3"
+PINK_DEEP = "#c026d3"
+
 PAGE_CSS = """
 <style>
-.viz-root {
-  color-scheme: light;
-  --surface-1: #fcfcfb;
-  --page-plane: #f9f9f7;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --border: rgba(11,11,11,0.10);
-}
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) .viz-root {
-    color-scheme: dark;
-    --surface-1: #1a1a19;
-    --page-plane: #0d0d0d;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --border: rgba(255,255,255,0.10);
-  }
-}
-:root[data-theme="dark"] .viz-root {
+.viz-root, .stApp {
   color-scheme: dark;
-  --surface-1: #1a1a19;
-  --page-plane: #0d0d0d;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --border: rgba(255,255,255,0.10);
+  --surface-1: #0a0a0a;
+  --page-plane: #000000;
+  --text-primary: #ff4fc3;
+  --text-secondary: #e879c9;
+  --border: rgba(255,79,195,0.25);
 }
+.stApp { background: #000000; }
+.stApp, .stApp p, .stApp span, .stApp label, .stApp li { color: #ff4fc3; }
+.stApp h1, .stApp h2, .stApp h3 { color: #ff8fd6; }
+section[data-testid="stSidebar"] { background: #0a0a0a; border-right: 1px solid rgba(255,79,195,0.15); }
 @keyframes heroShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
 }
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(8px); }
@@ -69,10 +61,12 @@ PAGE_CSS = """
   padding: 28px 32px;
   border-radius: 14px;
   margin-bottom: 8px;
-  background: linear-gradient(120deg, #2a78d6, #184f95, #2a78d6, #3987e5);
+  background: linear-gradient(120deg, #000000, #3b0740, #000000, #5b0a63);
   background-size: 300% 300%;
+  border: 1px solid rgba(255,79,195,0.3);
   animation: heroShift 12s ease-in-out infinite, fadeInUp 0.5s ease-out;
-  color: white;
+  color: #ff8fd6;
+  box-shadow: 0 0 40px rgba(255,79,195,0.15);
 }
 .hero-banner::before {
   content: "";
@@ -85,7 +79,7 @@ PAGE_CSS = """
 }
 .hero-banner h1, .hero-banner p, .hero-banner .logo-row { position: relative; }
 .logo-row { display: flex; align-items: center; gap: 10px; }
-.hero-banner h1 { margin: 0; font-size: 1.9rem; font-weight: 700; }
+.hero-banner h1 { margin: 0; font-size: 1.9rem; font-weight: 700; color: #ff8fd6; text-shadow: 0 0 18px rgba(255,79,195,0.6); }
 .hero-banner p { margin: 6px 0 0 0; opacity: 0.9; font-size: 0.95rem; }
 .legend-chip {
   display: inline-flex; align-items: center; gap: 6px;
@@ -102,22 +96,46 @@ div[data-testid="stExpander"] {
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 div[data-testid="stExpander"]:hover {
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 20px rgba(255,79,195,0.15);
 }
 .stButton button, .stDownloadButton button {
+  background: linear-gradient(135deg, #ff4fc3, #c026d3);
+  color: #000 !important;
+  border: none;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .stButton button:hover, .stDownloadButton button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(42,120,214,0.25);
+  box-shadow: 0 4px 20px rgba(255,79,195,0.5);
 }
 div[data-testid="stMetric"] {
   animation: fadeInUp 0.4s ease-out;
 }
-.stTabs [data-baseweb="tab-list"] { gap: 4px; }
+div[data-testid="stMetricValue"] { color: #ff4fc3; }
+.stTabs [data-baseweb="tab-list"] {
+  gap: 4px;
+  position: relative;
+  padding-left: 40px;
+}
+.stTabs [data-baseweb="tab-list"]::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 28px; height: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Ccircle cx='18' cy='18' r='16' fill='none' stroke='%23ff4fc3' stroke-width='2'/%3E%3Ccircle cx='18' cy='18' r='9' fill='%23ff4fc3'/%3E%3Ccircle cx='18' cy='18' r='4' fill='%23000000'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 6px rgba(255,79,195,0.7));
+}
 .stTabs [data-baseweb="tab"] {
   border-radius: 8px 8px 0 0;
   padding: 8px 16px;
+  color: #e879c9;
+}
+.stTabs [aria-selected="true"] {
+  color: #ff4fc3 !important;
+  border-bottom-color: #ff4fc3 !important;
 }
 .apple-section {
   padding: 56px 24px;
@@ -128,13 +146,14 @@ div[data-testid="stMetric"] {
 .apple-section:last-child { border-bottom: none; }
 .apple-section .eyebrow {
   font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; color: #2a78d6; margin-bottom: 10px;
+  text-transform: uppercase; color: #ff4fc3; margin-bottom: 10px;
 }
 .apple-section h2 {
   font-size: clamp(1.8rem, 4vw, 2.6rem);
   font-weight: 700;
   margin: 0 0 14px 0;
-  color: var(--text-primary);
+  color: #ff8fd6;
+  text-shadow: 0 0 16px rgba(255,79,195,0.4);
 }
 .apple-section p {
   font-size: 1.05rem;
@@ -148,7 +167,8 @@ div[data-testid="stMetric"] {
   margin: 40px 0 8px 0;
 }
 .stat-row .stat-value {
-  font-size: 2.4rem; font-weight: 700; color: var(--text-primary);
+  font-size: 2.4rem; font-weight: 700; color: #ff4fc3;
+  text-shadow: 0 0 14px rgba(255,79,195,0.5);
 }
 .stat-row .stat-label {
   font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;
@@ -163,30 +183,35 @@ div[data-testid="stMetric"] {
   align-items: center;
   justify-content: center;
   text-align: center;
+  border: 1px solid rgba(255,79,195,0.3);
   animation: fadeInUp 0.5s ease-out;
 }
 .photo-hero::before {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: var(--hero-img);
-  background-size: cover;
-  background-position: center;
-  filter: brightness(0.55);
+  background:
+    radial-gradient(circle at 22% 28%, rgba(255,45,149,0.65), transparent 45%),
+    radial-gradient(circle at 78% 22%, rgba(192,38,211,0.6), transparent 50%),
+    radial-gradient(circle at 50% 85%, rgba(255,79,195,0.5), transparent 55%),
+    #000000;
+  background-size: 200% 200%;
+  animation: heroShift 16s ease-in-out infinite, glowPulse 6s ease-in-out infinite;
 }
-.photo-hero .photo-hero-content { position: relative; color: white; padding: 0 24px; }
-.photo-hero .photo-hero-content .eyebrow { color: #cde2fb; }
+.photo-hero .photo-hero-content { position: relative; color: #ff8fd6; padding: 0 24px; }
+.photo-hero .photo-hero-content .eyebrow { color: #ff9fdb; }
 .photo-hero h1 {
   font-size: clamp(2.2rem, 5vw, 3.4rem);
   font-weight: 700;
   margin: 8px 0 0 0;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  text-shadow: 0 0 30px rgba(255,79,195,0.8);
 }
 .photo-hero p {
   font-size: 1.1rem;
   margin: 12px 0 0 0;
   opacity: 0.95;
   max-width: 560px;
+  color: #f5c6e8;
 }
 </style>
 """
@@ -214,7 +239,6 @@ MODEL_METRICS = pd.DataFrame([
     {"Class": "Ball", "Precision": 1.000, "Recall": 0.260, "mAP50": 0.303},
 ])
 
-HERO_IMAGE_PATH = "docs/hero_bg.jpg"
 PLAYER_MODEL_PATH = "models/best.pt"
 PITCH_MODEL_PATH = "sports/examples/soccer/data/football-pitch-detection.pt"
 SAMPLE_VIDEOS = {
@@ -267,9 +291,9 @@ st.markdown(
       <div class="hero-banner">
         <div class="logo-row">
           <svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true">
-            <circle cx="18" cy="18" r="16" fill="none" stroke="white" stroke-width="2" opacity="0.9"/>
-            <circle cx="18" cy="18" r="9" fill="white"/>
-            <circle cx="18" cy="18" r="4" fill="#2a78d6"/>
+            <circle cx="18" cy="18" r="16" fill="none" stroke="#ff4fc3" stroke-width="2" opacity="0.9"/>
+            <circle cx="18" cy="18" r="9" fill="#ff4fc3"/>
+            <circle cx="18" cy="18" r="4" fill="#000000"/>
           </svg>
           <h1>TacticEye</h1>
         </div>
@@ -279,12 +303,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-
-@st.cache_data
-def load_image_b64(path):
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode("ascii")
 
 
 def ensure_asset(path):
@@ -464,18 +482,17 @@ if "entered_app" not in st.session_state:
     st.session_state.entered_app = False
 
 if not st.session_state.entered_app:
-    hero_b64 = load_image_b64(HERO_IMAGE_PATH) if os.path.exists(HERO_IMAGE_PATH) else None
     st.markdown(
-        f"""
+        """
         <div class="viz-root">
-          {f'''<div class="photo-hero" style="--hero-img: url('data:image/jpeg;base64,{hero_b64}');">
+          <div class="photo-hero">
             <div class="photo-hero-content">
               <div class="eyebrow">Computer Vision · Sports Analytics</div>
               <h1>TacticEye</h1>
               <p>See the game the way a coach does — player detection, team
               identification, and a live tactical radar, from a custom-trained model.</p>
             </div>
-          </div>''' if hero_b64 else ''}
+          </div>
           <div class="apple-section">
             <p>Upload match footage and get player detection, team identification, and a
             live tactical radar view — powered by a custom-trained detector, not a
