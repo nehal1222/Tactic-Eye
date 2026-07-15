@@ -81,7 +81,8 @@ PAGE_CSS = """
   mix-blend-mode: overlay;
   pointer-events: none;
 }
-.hero-banner h1, .hero-banner p { position: relative; }
+.hero-banner h1, .hero-banner p, .hero-banner .logo-row { position: relative; }
+.logo-row { display: flex; align-items: center; gap: 10px; }
 .hero-banner h1 { margin: 0; font-size: 1.9rem; font-weight: 700; }
 .hero-banner p { margin: 6px 0 0 0; opacity: 0.9; font-size: 0.95rem; }
 .legend-chip {
@@ -209,13 +210,20 @@ if STRIPE_SECRET_KEY:
 
 db.init_db()
 
-st.set_page_config(page_title="AI Tactical Dashboard", layout="wide")
+st.set_page_config(page_title="TacticEye", layout="wide")
 st.markdown(PAGE_CSS, unsafe_allow_html=True)
 st.markdown(
     """
     <div class="viz-root">
       <div class="hero-banner">
-        <h1>AI Tactical Dashboard</h1>
+        <div class="logo-row">
+          <svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r="16" fill="none" stroke="white" stroke-width="2" opacity="0.9"/>
+            <circle cx="18" cy="18" r="9" fill="white"/>
+            <circle cx="18" cy="18" r="4" fill="#2a78d6"/>
+          </svg>
+          <h1>TacticEye</h1>
+        </div>
         <p>Custom-trained YOLOv8 detection · ByteTrack · team classification · homography-based tactical radar</p>
       </div>
     </div>
@@ -434,7 +442,7 @@ with st.sidebar:
                     line_items=[{
                         "price_data": {
                             "currency": "usd",
-                            "product_data": {"name": "AI Tactical Dashboard — Premium"},
+                            "product_data": {"name": "TacticEye — Premium"},
                             "unit_amount": PREMIUM_PRICE_USD_CENTS,
                         },
                         "quantity": 1,

@@ -1,4 +1,4 @@
-# ⚽ AI Tactical Dashboard
+# ⚽ TacticEye
 
 An end-to-end soccer analytics pipeline: a custom-trained YOLOv8 object detector feeds
 multi-object tracking, unsupervised team classification, and homography-based
